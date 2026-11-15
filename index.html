@@ -2948,6 +2948,7 @@ function renderQuestion(){
 
   Object.keys(q.options).sort().forEach(letter => {
     const btn = document.createElement("button");
+    btn.className = "opt";   // wajib: tanpa ini CSS hijau/merah tidak berlaku
     btn.disabled = answered; // sudah dijawab = terkunci, tidak bisa diubah
 
     const isKey = (letter === q.answer);
