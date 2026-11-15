@@ -127,11 +127,6 @@ td:first-child,th:first-child{text-align:left}
 #timer.warn{background:var(--warn);color:#fff}
 #timer.danger{background:var(--danger);color:#fff;animation:pulse 1s infinite alternate}
 @keyframes pulse{from{opacity:1}to{opacity:.6}}
-#live-score{
-  font-size:.8rem;font-weight:700;
-  background:var(--surface-2);border-radius:10px;padding:6px 12px;
-  white-space:nowrap;
-}
 .topbar .spacer{flex:1}
 .topbar .who{color:var(--text-2);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .icon-btn{
@@ -414,7 +409,6 @@ td:first-child,th:first-child{text-align:left}
 <section id="screen-exam" class="screen">
   <div class="topbar no-print">
     <div id="timer">90:00</div>
-    <div id="live-score" title="Akumulasi jawabanmu">📝 0/0 &nbsp;✅ 0 &nbsp;❌ 0</div>
     <div class="who" id="who-name"></div>
     <div class="spacer"></div>
     <button class="icon-btn" id="nav-toggle" title="Panel nomor soal">☰</button>
@@ -494,6 +488,7 @@ td:first-child,th:first-child{text-align:left}
           <tbody id="sec-tbody"></tbody>
         </table>
       </div>
+      <p class="small muted" id="score-expl" style="margin-top:12px;background:var(--surface-2);border-radius:10px;padding:10px 14px"></p>
     </div>
 
     <div class="card">
@@ -3081,21 +3076,6 @@ function updateNumBtn(qid){
   if (!b) return;
   b.classList.toggle("answered", !!session.answers[qid]);
   b.classList.toggle("flagged", !!session.flagged[qid]);
-  updateLiveScore();
-}
-
-/** Akumulasi live di bar atas: terjawab / benar / salah. */
-function updateLiveScore(){
-  const el = $("#live-score");
-  if (!el || !session) return;
-  let answered = 0, correct = 0;
-  QUESTIONS.forEach(q => {
-    const a = session.answers[q.id];
-    if (!a) return;
-    answered++;
-    if (q.void || a === q.answer) correct++;   // soal dianulir = benar
-  });
-  el.innerHTML = `📝 ${answered}/${QUESTIONS.length} &nbsp;✅ ${correct} &nbsp;❌ ${answered - correct}`;
 }
 function highlightCurrentNum(){
   document.querySelectorAll(".num-btn").forEach(b => b.classList.remove("current"));
@@ -3267,7 +3247,8 @@ function renderResult(){
   // Tabel per section
   const tbody = $("#sec-tbody");
   tbody.innerHTML = "";
-  ["listening","structure","reading"].filter(sec => res.sections[sec]).forEach(sec => {
+  const activeSecs = ["listening","structure","reading"].filter(sec => res.sections[sec]);
+  activeSecs.forEach(sec => {
     const s = res.sections[sec];
     tbody.innerHTML += `<tr>
       <td style="text-align:left">${SECTION_INFO[sec].label}</td>
@@ -3276,6 +3257,15 @@ function renderResult(){
       <td><b>${s.score}</b> <span class="muted small">/ ${s.total} benar</span></td>
     </tr>`;
   });
+
+  // Rincian cara hitung skor akhir (transparan: benar -> skor konversi -> skor akhir)
+  const parts = activeSecs.map(sec => `${SECTION_INFO[sec].label.split(" ")[0]} ${res.sections[sec].score}`).join(" + ");
+  const sum = activeSecs.reduce((a, sec) => a + res.sections[sec].score, 0);
+  const expl = $("#score-expl");
+  if (expl){
+    expl.innerHTML = `Jumlah benarmu dikonversi lewat tabel skor: ${parts}` +
+      `<br><b>Skor akhir = (${sum}) × 10 ÷ ${activeSecs.length} = <span style="color:var(--primary)">${res.final}</span></b>`;
+  }
 
   // Target skor
   $("#inp-target").value = CONFIG.targetDefault;
