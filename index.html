@@ -127,6 +127,11 @@ td:first-child,th:first-child{text-align:left}
 #timer.warn{background:var(--warn);color:#fff}
 #timer.danger{background:var(--danger);color:#fff;animation:pulse 1s infinite alternate}
 @keyframes pulse{from{opacity:1}to{opacity:.6}}
+#live-score{
+  font-size:.8rem;font-weight:700;
+  background:var(--surface-2);border-radius:10px;padding:6px 12px;
+  white-space:nowrap;
+}
 .topbar .spacer{flex:1}
 .topbar .who{color:var(--text-2);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .icon-btn{
@@ -409,6 +414,7 @@ td:first-child,th:first-child{text-align:left}
 <section id="screen-exam" class="screen">
   <div class="topbar no-print">
     <div id="timer">90:00</div>
+    <div id="live-score" title="Akumulasi jawabanmu">📝 0/0 &nbsp;✅ 0 &nbsp;❌ 0</div>
     <div class="who" id="who-name"></div>
     <div class="spacer"></div>
     <button class="icon-btn" id="nav-toggle" title="Panel nomor soal">☰</button>
@@ -2713,12 +2719,35 @@ const QUESTIONS = [
 const DURATION_MS   = CONFIG.durationMinutes * 60 * 1000;
 const TOTAL_SECONDS = CONFIG.durationMinutes * 60;
 
-let session = null;      // { name, answers:{id:"A"}, flagged:{id:true}, startedAt, endTime }
+let session = null;      // { name, answers:{id:"A"}, flagged:{id:true}, startedAt, endTime, order:[id,...] }
 let currentIdx = 0;      // indeks soal yang sedang tampil
 let timerId = null;
 let warned10 = false, warned5 = false;
 let lastResult = null;   // hasil terakhir untuk layar hasil
 let reviewFilter = { status:"all", section:"all" };
+
+/* Urutan soal ujian. Diacak setiap mulai ujian (per section), tetap stabil
+   saat refresh karena urutannya disimpan di session.order. */
+let EXAM = QUESTIONS.slice();
+
+/** Acak urutan soal di dalam tiap section (Fisher–Yates); urutan section tetap. */
+function shuffleExam(){
+  EXAM = [];
+  ["listening","structure","reading"].forEach(sec => {
+    const pool = QUESTIONS.filter(q => q.section === sec);
+    for (let i = pool.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    EXAM = EXAM.concat(pool);
+  });
+}
+/** Terapkan urutan tersimpan (saat melanjutkan sesi). */
+function applyOrder(ids){
+  const byId = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+  EXAM = (ids || []).map(id => byId[id]).filter(Boolean);
+  if (EXAM.length !== QUESTIONS.length) EXAM = QUESTIONS.slice(); // fallback aman
+}
 
 /** Simpan sesi ke localStorage (aman dengan try/catch). */
 function saveSession(){
@@ -2821,7 +2850,7 @@ function checkSavedSession(){
     const left = Math.floor((saved.endTime - now) / 1000);
     $("#resume-info").textContent =
       `Sisa waktu ${fmtMMSS(left)} • ${(saved.answers ? Object.keys(saved.answers).length : 0)} soal sudah dijawab.`;
-    $("#btn-resume").onclick = () => { session = saved; enterExam(true); };
+    $("#btn-resume").onclick = () => { session = saved; applyOrder(session.order); enterExam(true); };
     $("#btn-discard").onclick = () => {
       try { localStorage.removeItem(CONFIG.storageKeys.session); } catch(e){}
       $("#resume-banner").classList.add("hidden");
@@ -2839,12 +2868,14 @@ $("#btn-start").addEventListener("click", () => {
   if (!name){ toast("Tulis dulu namamu, ya. 😊", "warn"); $("#inp-name").focus(); return; }
   // Hapus sesi lama jika ada
   try { localStorage.removeItem(CONFIG.storageKeys.session); } catch(e){}
+  shuffleExam();  // urutan soal acak setiap mulai ujian baru
   session = {
     name,
     answers: {},                     // { questionId: "A" }
     flagged: {},                     // { questionId: true }
     startedAt: Date.now(),
-    endTime: Date.now() + DURATION_MS   // waktu selesai absolut — akurat saat refresh
+    endTime: Date.now() + DURATION_MS,  // waktu selesai absolut — akurat saat refresh
+    order: EXAM.map(q => q.id)          // simpan urutan acak agar stabil saat refresh
   };
   saveSession();
   enterExam(false);
@@ -2858,7 +2889,7 @@ function enterExam(resumed){
   warned10 = false; warned5 = false;
   showScreen("exam");
   $("#who-name").textContent = session.name;
-  buildNavPanel();
+  buildNavPanel();       // di dalamnya live-score ikut diperbarui
   currentIdx = 0;
   renderQuestion();
   startTimer();
@@ -2893,16 +2924,16 @@ function updateTimerUI(){
   el.classList.toggle("danger", left <= 300);
 }
 
-/** Render soal pada indeks `idx` (mengikuti urutan QUESTIONS). */
+/** Render soal pada indeks `idx` (mengikuti urutan EXAM yang sudah diacak). */
 function renderQuestion(){
-  const q = QUESTIONS[currentIdx];
+  const q = EXAM[currentIdx];
   const info = SECTION_INFO[q.section];
 
   // Badge section + nomor
   const badge = $("#q-badge");
   badge.textContent = info.badge;
   badge.className = "badge " + info.cls;
-  $("#q-number").textContent = `Soal ${currentIdx + 1} dari ${QUESTIONS.length}`;
+  $("#q-number").textContent = `Soal ${currentIdx + 1} dari ${EXAM.length}`;
 
   // Tandai ragu-ragu
   const flagBtn = $("#btn-flag");
@@ -2982,7 +3013,7 @@ function renderQuestion(){
 
   // Tombol prev/next
   $("#btn-prev").disabled = currentIdx === 0;
-  $("#btn-next").disabled = currentIdx === QUESTIONS.length - 1;
+  $("#btn-next").disabled = currentIdx === EXAM.length - 1;
 
   highlightCurrentNum();
   // Scroll area soal ke atas (bukan seluruh halaman, agar panel nomor tetap)
@@ -2994,7 +3025,7 @@ function buildNavPanel(){
   const wrap = $("#nav-sections");
   wrap.innerHTML = "";
   ["listening","structure","reading"].forEach(sec => {
-    const qs = QUESTIONS.map((q,i) => ({q,i})).filter(x => x.q.section === sec);
+    const qs = EXAM.map((q,i) => ({q,i})).filter(x => x.q.section === sec);
     if (!qs.length) return;
     const label = document.createElement("div");
     label.className = "sec-label";
@@ -3024,10 +3055,25 @@ function updateNumBtn(qid){
   if (!b) return;
   b.classList.toggle("answered", !!session.answers[qid]);
   b.classList.toggle("flagged", !!session.flagged[qid]);
+  updateLiveScore();
+}
+
+/** Akumulasi live di bar atas: terjawab / benar / salah. */
+function updateLiveScore(){
+  const el = $("#live-score");
+  if (!el || !session) return;
+  let answered = 0, correct = 0;
+  QUESTIONS.forEach(q => {
+    const a = session.answers[q.id];
+    if (!a) return;
+    answered++;
+    if (q.void || a === q.answer) correct++;   // soal dianulir = benar
+  });
+  el.innerHTML = `📝 ${answered}/${QUESTIONS.length} &nbsp;✅ ${correct} &nbsp;❌ ${answered - correct}`;
 }
 function highlightCurrentNum(){
   document.querySelectorAll(".num-btn").forEach(b => b.classList.remove("current"));
-  const b = document.querySelector(`.num-btn[data-qid="${QUESTIONS[currentIdx].id}"]`);
+  const b = document.querySelector(`.num-btn[data-qid="${EXAM[currentIdx].id}"]`);
   if (b) b.classList.add("current");
 }
 
@@ -3040,10 +3086,10 @@ $("#nav-overlay").addEventListener("click", closeNav);
 
 /* ---------- Tombol ujian ---------- */
 $("#btn-prev").addEventListener("click", () => { if (currentIdx > 0){ currentIdx--; renderQuestion(); } });
-$("#btn-next").addEventListener("click", () => { if (currentIdx < QUESTIONS.length - 1){ currentIdx++; renderQuestion(); } });
+$("#btn-next").addEventListener("click", () => { if (currentIdx < EXAM.length - 1){ currentIdx++; renderQuestion(); } });
 
 $("#btn-flag").addEventListener("click", () => {
-  const q = QUESTIONS[currentIdx];
+  const q = EXAM[currentIdx];
   session.flagged[q.id] = !session.flagged[q.id];
   if (!session.flagged[q.id]) delete session.flagged[q.id];
   saveSession();
