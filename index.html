@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulasi USEPT — TOEFL ITP Style</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+<style>
+/* ============================================================
+   THEME & DASAR
+   ============================================================ */
+:root{
+  --bg:#f4f6fa; --surface:#ffffff; --surface-2:#eef1f6;
+  --text:#1c2430; --text-2:#5b6575; --border:#d9dfe8;
+  --primary:#2f6fed; --primary-soft:#e3ecff;
+  --success:#1a9e5c; --success-soft:#e0f5ea;
+  --danger:#d64545; --danger-soft:#fde6e6;
+  --warn:#c98a00; --warn-soft:#fff3d6;
+  --radius:14px;
+  --shadow:0 1px 3px rgba(20,30,50,.08),0 8px 24px rgba(20,30,50,.06);
+}
+[data-theme="dark"]{
+  --bg:#12161d; --surface:#1b212b; --surface-2:#232b37;
+  --text:#e8ecf2; --text-2:#9aa5b5; --border:#313b49;
+  --primary:#5b8ff7; --primary-soft:#1e2c47;
+  --success:#37c07c; --success-soft:#163326;
+  --danger:#ef6b6b; --danger-soft:#3a2020;
+  --warn:#e2b13c; --warn-soft:#3a2f14;
+  --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",sans-serif;
+  background:var(--bg); color:var(--text);
+  line-height:1.55; font-size:16px;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font:inherit;color:inherit}
+.hidden{display:none !important}
+
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+.container{max-width:1060px;margin:0 auto;padding:16px}
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:20px;margin-bottom:16px;
+}
+h1{font-size:1.7rem;line-height:1.25}
+h2{font-size:1.2rem;margin-bottom:10px}
+h3{font-size:1.05rem}
+p{margin-bottom:8px}
+.muted{color:var(--text-2)}
+.small{font-size:.85rem}
+
+/* Tombol umum */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 20px;border-radius:12px;font-weight:600;font-size:1rem;
+  border:1px solid var(--border);background:var(--surface);
+  min-height:48px;transition:filter .15s,transform .05s;
+}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-success{background:var(--success);border-color:var(--success);color:#fff}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn-soft{background:var(--primary-soft);border-color:transparent;color:var(--primary)}
+.btn-ghost{background:transparent}
+.btn:not(:disabled):hover{filter:brightness(1.06)}
+
+/* ============================================================
+   LAYAR 1 — BERANDA
+   ============================================================ */
+.hero{text-align:center;padding:40px 16px 20px}
+.hero .logo{font-size:3rem}
+.hero p{max-width:560px;margin:8px auto 0;color:var(--text-2)}
+.field{margin-bottom:14px}
+.field label{display:block;font-weight:600;margin-bottom:6px}
+.field input,.field select{
+  width:100%;padding:12px 14px;border-radius:12px;
+  border:1.5px solid var(--border);background:var(--surface);
+  min-height:48px;
+}
+.field input:focus,.field select:focus{outline:2px solid var(--primary);border-color:var(--primary)}
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}
+.rule-item{
+  background:var(--surface-2);border-radius:12px;padding:12px;text-align:center;
+}
+.rule-item .num{font-size:1.4rem;font-weight:700;color:var(--primary)}
+.rule-item .lbl{font-size:.8rem;color:var(--text-2)}
+#resume-banner{
+  background:var(--warn-soft);border:1px solid var(--warn);
+  border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:center}
+th{color:var(--text-2);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+td:first-child,th:first-child{text-align:left}
+.theme-btn{
+  position:fixed;top:12px;right:12px;z-index:60;
+  width:44px;height:44px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);
+  box-shadow:var(--shadow);font-size:1.2rem;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ============================================================
+   LAYAR 2 — UJIAN
+   ============================================================ */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+}
+#timer{
+  font-variant-numeric:tabular-nums;
+  font-weight:700;font-size:1.15rem;
+  background:var(--surface-2);border-radius:10px;padding:6px 14px;
+  min-width:96px;text-align:center;
+  transition:background .3s,color .3s;
+}
+#timer.warn{background:var(--warn);color:#fff}
+#timer.danger{background:var(--danger);color:#fff;animation:pulse 1s infinite alternate}
+@keyframes pulse{from{opacity:1}to{opacity:.6}}
+.topbar .spacer{flex:1}
+.topbar .who{color:var(--text-2);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icon-btn{
+  width:44px;height:44px;border-radius:10px;flex:none;
+  border:1px solid var(--border);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+}
+
+.exam-wrap{max-width:1240px;margin:0 auto;padding:16px;display:grid;gap:16px}
+/* Passage di sisi kiri pada layar lebar */
+@media(min-width:900px){
+  .exam-wrap{grid-template-columns:1fr 1.2fr}
+  .passage-pane{
+    order:-1;
+    max-height:calc(100vh - 140px);
+    overflow-y:auto;
+    position:sticky;top:76px;
+  }
+}
+.question-area{min-width:0}
+.q-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.badge{
+  font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  padding:4px 10px;border-radius:999px;background:var(--primary-soft);color:var(--primary);
+}
+.badge.reading{background:var(--success-soft);color:var(--success)}
+.badge.listening{background:var(--warn-soft);color:var(--warn)}
+.q-num{font-weight:700;font-size:1.05rem}
+#btn-flag{
+  margin-left:auto;border:1px solid var(--border);
+  background:var(--surface);border-radius:10px;padding:9px 14px;
+  font-weight:600;font-size:.85rem;min-height:44px;
+}
+#btn-flag.on{background:var(--warn);border-color:var(--warn);color:#fff}
+
+.audio-box{
+  background:var(--surface-2);border-radius:12px;padding:12px;margin-bottom:14px;
+}
+.audio-box audio{width:100%;margin-top:8px}
+.audio-missing{color:var(--warn);font-weight:600;font-size:.9rem}
+
+.q-text{font-size:1.05rem;margin-bottom:18px;white-space:pre-wrap}
+.q-text.passage-q{margin-bottom:6px;font-weight:600}
+
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{
+  display:flex;align-items:flex-start;gap:12px;text-align:left;
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:13px 14px;min-height:52px;
+  transition:border-color .15s,background .15s;
+  font-size:1rem;
+}
+.opt:hover{border-color:var(--primary)}
+.opt .letter{
+  flex:none;width:30px;height:30px;border-radius:8px;
+  background:var(--surface-2);font-weight:700;
+  display:flex;align-items:center;justify-content:center;font-size:.9rem;
+}
+.opt.selected{border-color:var(--primary);background:var(--primary-soft)}
+.opt.selected .letter{background:var(--primary);color:#fff}
+
+.q-nav{display:flex;gap:10px;margin-top:20px}
+.q-nav .btn{flex:1}
+
+/* Passage */
+.passage-pane .card{position:relative}
+.passage-title{font-weight:700;margin-bottom:10px;color:var(--primary)}
+.passage-text{white-space:pre-wrap;font-size:.98rem;color:var(--text)}
+.passage-line{border-top:1px dashed var(--border);margin:10px 0}
+@media(max-width:899px){.passage-pane{display:none}}
+
+/* Panel navigasi nomor */
+.nav-panel{
+  position:fixed;top:0;right:0;bottom:0;z-index:50;
+  width:min(340px,88vw);
+  background:var(--surface);border-left:1px solid var(--border);
+  transform:translateX(105%);transition:transform .25s ease;
+  overflow-y:auto;padding:16px;
+}
+.nav-panel.open{transform:translateX(0)}
+.nav-overlay{
+  position:fixed;inset:0;z-index:49;background:rgba(0,0,0,.45);
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.nav-overlay.show{opacity:1;pointer-events:auto}
+@media(min-width:1240px){
+  /* Di layar sangat lebar panel selalu tampak */
+  .nav-panel{
+    transform:none;position:sticky;top:76px;height:calc(100vh - 96px);
+    margin-top:16px;border-radius:var(--radius);border:1px solid var(--border);
+    box-shadow:var(--shadow);
+  }
+  .nav-overlay{display:none}
+  .exam-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;max-width:1600px;margin:0 auto;padding:16px}
+  #nav-toggle{display:none}
+}
+@media(max-width:1239px){.exam-grid{display:block}}
+.sec-label{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin:14px 0 8px}
+.num-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px}
+.num-btn{
+  min-height:44px;border-radius:9px;font-weight:600;font-size:.85rem;
+  background:var(--surface-2);border:1.5px solid var(--border);color:var(--text-2);
+}
+.num-btn.answered{background:var(--primary);border-color:var(--primary);color:#fff}
+.num-btn.flagged{background:var(--warn);border-color:var(--warn);color:#fff}
+.num-btn.current{outline:2.5px solid var(--success);outline-offset:1px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:.78rem;color:var(--text-2)}
+.legend span{display:flex;align-items:center;gap:5px}
+.dot{width:14px;height:14px;border-radius:5px;display:inline-block;border:1px solid var(--border)}
+.dot.d1{background:var(--surface-2)}
+.dot.d2{background:var(--primary);border-color:var(--primary)}
+.dot.d3{background:var(--warn);border-color:var(--warn)}
+
+/* ============================================================
+   LAYAR 3 — HASIL & PEMBAHASAN
+   ============================================================ */
+.score-hero{text-align:center;padding:28px 16px}
+.score-hero .big{
+  font-size:3.2rem;font-weight:800;color:var(--primary);line-height:1.1;
+}
+.score-hero .cap{color:var(--text-2);font-size:.9rem}
+.score-pill{
+  display:inline-block;padding:6px 16px;border-radius:999px;font-weight:700;margin-top:10px;
+}
+.score-pill.pass{background:var(--success-soft);color:var(--success)}
+.score-pill.fail{background:var(--danger-soft);color:var(--danger)}
+.result-meta{display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:center;margin-top:12px;color:var(--text-2);font-size:.9rem}
+.sec-table td,.sec-table th{padding:11px 6px}
+.target-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px}
+.target-row .field{flex:1;min-width:160px;margin-bottom:0}
+.target-result{padding:12px 16px;border-radius:12px;font-weight:600}
+.target-result.pass{background:var(--success-soft);color:var(--success)}
+.target-result.fail{background:var(--danger-soft);color:var(--danger)}
+
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{
+  padding:9px 14px;border-radius:999px;border:1.5px solid var(--border);
+  background:var(--surface);font-weight:600;font-size:.85rem;min-height:44px;
+}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.filter-bar select{
+  padding:9px 12px;border-radius:999px;border:1.5px solid var(--border);
+  background:var(--surface);min-height:44px;
+}
+.review-item{border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.review-item.correct{border-left:5px solid var(--success)}
+.review-item.wrong{border-left:5px solid var(--danger)}
+.review-item.blank{border-left:5px solid var(--text-2)}
+.review-item.voided{border-left:5px solid var(--warn)}
+.rv-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.status-tag{font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:999px}
+.status-tag.correct{background:var(--success-soft);color:var(--success)}
+.status-tag.wrong{background:var(--danger-soft);color:var(--danger)}
+.status-tag.blank{background:var(--surface-2);color:var(--text-2)}
+.status-tag.voided{background:var(--warn-soft);color:var(--warn)}
+.rv-q{margin-bottom:10px;white-space:pre-wrap}
+.rv-opt{padding:8px 12px;border-radius:9px;margin-bottom:6px;font-size:.92rem;border:1px solid var(--border)}
+.rv-opt.key{background:var(--success-soft);border-color:var(--success);font-weight:600}
+.rv-opt.picked-wrong{background:var(--danger-soft);border-color:var(--danger)}
+.rv-expl{
+  background:var(--surface-2);border-radius:10px;padding:10px 12px;
+  font-size:.9rem;margin-top:8px;
+}
+.rv-expl b{color:var(--primary)}
+
+/* Modal konfirmasi */
+.modal-wrap{
+  position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
+  background:rgba(10,15,25,.55);padding:16px;
+}
+.modal{
+  background:var(--surface);border-radius:16px;padding:22px;
+  max-width:420px;width:100%;box-shadow:var(--shadow);
+}
+.modal h3{margin-bottom:8px}
+.modal .actions{display:flex;gap:10px;margin-top:18px}
+.modal .actions .btn{flex:1}
+
+/* Toast */
+#toast-wrap{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;width:min(92vw,420px)}
+.toast{
+  background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--primary);
+  border-radius:12px;padding:12px 16px;box-shadow:var(--shadow);
+  font-weight:600;font-size:.92rem;animation:slideIn .25s ease;
+}
+.toast.warn{border-left-color:var(--warn)}
+.toast.danger{border-left-color:var(--danger)}
+.toast.success{border-left-color:var(--success)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+
+/* ============================================================
+   CETAK / PDF
+   ============================================================ */
+@media print{
+  body{background:#fff;color:#000;font-size:12px}
+  .theme-btn,.no-print,.topbar,.nav-panel,.nav-overlay,#toast-wrap,.modal-wrap{display:none !important}
+  .screen{display:none !important}
+  body[data-screen="result"] #screen-result{display:block !important}
+  body[data-screen="review"] #screen-review{display:block !important}
+  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .review-item{break-inside:avoid}
+  .score-hero .big{color:#000}
+}
+</style>
+</head>
+<body data-screen="home">
+
+<button class="theme-btn no-print" id="btn-theme" title="Ganti tema terang/gelap">🌙</button>
+
+<!-- ============================================================
+     LAYAR 1 — BERANDA
+     ============================================================ -->
+<section id="screen-home" class="screen active">
+  <div class="hero">
+    <div class="logo">📝</div>
+    <h1>Simulasi USEPT</h1>
+    <p>Ujian simulasi bergaya TOEFL ITP — 150 soal, 90 menit, hasil langsung keluar setelah dikumpulkan.</p>
+  </div>
+
+  <div class="container">
+    <!-- Banner lanjutkan ujian (muncul jika ada sesi tersimpan) -->
+    <div id="resume-banner" class="hidden">
+      <div>
+        <b id="resume-name">Peserta</b>, ada sesi ujian yang belum selesai.<br>
+        <span class="small muted" id="resume-info"></span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" id="btn-resume">▶ Lanjutkan</button>
+        <button class="btn btn-ghost" id="btn-discard">Buang</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label for="inp-name">Nama Peserta</label>
+        <input id="inp-name" type="text" placeholder="Tulis nama lengkapmu" maxlength="60" autocomplete="name">
+      </div>
+      <button class="btn btn-primary" id="btn-start" style="width:100%">🚀 Mulai Simulasi</button>
+    </div>
+
+    <div class="card">
+      <h2>Aturan Singkat</h2>
+      <div class="rules-grid">
+        <div class="rule-item"><div class="num">150</div><div class="lbl">Total Soal</div></div>
+        <div class="rule-item"><div class="num">90</div><div class="lbl">Menit Ujian</div></div>
+        <div class="rule-item"><div class="num">3</div><div class="lbl">Section</div></div>
+        <div class="rule-item"><div class="num">A–E</div><div class="lbl">Pilihan Jawaban</div></div>
+      </div>
+      <p class="small muted" style="margin-top:12px">
+        • Listening 50 soal &nbsp;•&nbsp; Structure &amp; Written Expression 40 soal &nbsp;•&nbsp; Reading Comprehension 60 soal<br>
+        • Kamu bebas pindah antarsoal dan antarsection.<br>
+        • Jawaban tersimpan otomatis setiap kali dipilih — aman saat halaman di-refresh.<br>
+        • Hasil &amp; pembahasan langsung muncul setelah dikumpulkan, dan <b>otomatis terkumpul saat waktu habis</b>.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Riwayat Simulasi</h2>
+      <div id="history-box">
+        <p class="muted small">Belum ada riwayat. Selesaikan simulasi pertamamu!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     LAYAR 2 — UJIAN
+     ============================================================ -->
+<section id="screen-exam" class="screen">
+  <div class="topbar no-print">
+    <div id="timer">90:00</div>
+    <div class="who" id="who-name"></div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="nav-toggle" title="Panel nomor soal">☰</button>
+    <button class="btn btn-success" id="btn-finish-top" style="min-height:44px;padding:8px 16px">✓ Kumpulkan</button>
+  </div>
+
+  <div class="exam-grid">
+    <div class="exam-wrap" style="padding:0">
+      <!-- Passage (Reading) -->
+      <aside class="passage-pane hidden" id="passage-pane">
+        <div class="card">
+          <div class="passage-title" id="passage-title"></div>
+          <div class="passage-text" id="passage-text"></div>
+        </div>
+      </aside>
+
+      <!-- Soal -->
+      <main class="question-area">
+        <div class="card">
+          <div class="q-head">
+            <span class="badge" id="q-badge">STRUCTURE</span>
+            <span class="q-num" id="q-number">Soal 1</span>
+            <button id="btn-flag">🚩 Tandai ragu-ragu</button>
+          </div>
+          <div id="audio-box" class="hidden"></div>
+          <div class="q-text" id="q-text"></div>
+          <div class="opts" id="opts"></div>
+          <div class="q-nav">
+            <button class="btn" id="btn-prev">← Sebelumnya</button>
+            <button class="btn btn-soft" id="btn-next">Berikutnya →</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Panel navigasi nomor soal -->
+    <aside class="nav-panel no-print" id="nav-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <h2 style="margin:0">Nomor Soal</h2>
+        <button class="icon-btn" id="nav-close" title="Tutup">✕</button>
+      </div>
+      <div id="nav-sections"></div>
+      <div class="legend">
+        <span><i class="dot d1"></i> Belum dijawab</span>
+        <span><i class="dot d2"></i> Sudah dijawab</span>
+        <span><i class="dot d3"></i> Ragu-ragu</span>
+      </div>
+      <button class="btn btn-success" id="btn-finish-panel" style="width:100%;margin-top:16px">✓ Selesai &amp; Kumpulkan</button>
+    </aside>
+    <div class="nav-overlay no-print" id="nav-overlay"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     LAYAR 3 — HASIL
+     ============================================================ -->
+<section id="screen-result" class="screen">
+  <div class="container">
+    <div class="card score-hero">
+      <div class="cap">Skor Akhir (estimasi)</div>
+      <div class="big" id="final-score">—</div>
+      <div id="target-pill" class="score-pill pass hidden"></div>
+      <div class="result-meta">
+        <span>👤 <b id="r-name"></b></span>
+        <span>📅 <span id="r-date"></span></span>
+        <span>⏱ Waktu terpakai: <b id="r-used"></b></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Rincian per Section</h2>
+      <div style="overflow-x:auto">
+        <table class="sec-table">
+          <thead>
+            <tr><th>Section</th><th>Benar</th><th>Salah</th><th>Kosong</th><th>Skor Konversi</th></tr>
+          </thead>
+          <tbody id="sec-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Target Skor</h2>
+      <div class="target-row">
+        <div class="field">
+          <label for="inp-target">Target kamu</label>
+          <input id="inp-target" type="number" min="0" max="677" step="1" value="400">
+        </div>
+        <div id="target-result" class="target-result" style="flex:1"></div>
+      </div>
+    </div>
+
+    <div class="card" style="display:flex;flex-wrap:wrap;gap:10px">
+      <button class="btn btn-soft" id="btn-review">📖 Lihat Pembahasan</button>
+      <button class="btn" id="btn-print">🖨 Cetak / Simpan PDF</button>
+      <button class="btn btn-danger" id="btn-retry" style="margin-left:auto">🔄 Ulangi Simulasi</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     LAYAR 3b — PEMBAHASAN
+     ============================================================ -->
+<section id="screen-review" class="screen">
+  <div class="container">
+    <div class="card no-print" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+      <button class="btn" id="btn-back-result">← Kembali ke Hasil</button>
+      <button class="btn" id="btn-print2">🖨 Cetak / Simpan PDF</button>
+    </div>
+
+    <div class="card no-print">
+      <div class="filter-bar" id="status-filter">
+        <button class="chip on" data-f="all">Semua</button>
+        <button class="chip" data-f="wrong">Salah</button>
+        <button class="chip" data-f="blank">Kosong</button>
+      </div>
+      <div class="filter-bar">
+        <select id="sec-filter">
+          <option value="all">Semua Section</option>
+          <option value="listening">Listening</option>
+          <option value="structure">Structure &amp; Written Expression</option>
+          <option value="reading">Reading Comprehension</option>
+        </select>
+        <span class="muted small" id="review-count" style="align-self:center"></span>
+      </div>
+    </div>
+
+    <div id="review-list"></div>
+  </div>
+</section>
+
+<!-- Modal konfirmasi kumpulkan -->
+<div class="modal-wrap hidden" id="modal-finish">
+  <div class="modal">
+    <h3>Kumpulkan sekarang?</h3>
+    <p id="finish-msg" class="muted"></p>
+    <div class="actions">
+      <button class="btn" id="btn-cancel-finish">Batal</button>
+      <button class="btn btn-success" id="btn-confirm-finish">Ya, Kumpulkan</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script>
+"use strict";
+/* ================================================================
+   KONFIGURASI — ubah di sini
+   ================================================================ */
+const CONFIG = {
+  title: "Simulasi USEPT",
+  durationMinutes: 90,          // durasi total ujian (menit)
+  targetDefault: 400,           // target skor default di layar hasil
+  historyLimit: 10,             // jumlah riwayat tersimpan
+  storageKeys: {
+    session: "usept_session",   // sesi ujian berjalan
+    history: "usept_history",   // riwayat hasil
+    theme:   "usept_theme"      // tema terang/gelap
+  }
+};
+
+/* ================================================================
+   TABEL KONVERSI SKOR  (jumlah benar -> [Listening, Structure, Reading])
+   null = tidak ada nilai di tabel; pakai nilai baris tertinggi tersedia
+   ================================================================ */
+const CONVERSION = {
+  50:[68,null,67], 49:[67,null,66], 48:[66,null,65], 47:[65,null,63], 46:[63,null,61],
+  45:[62,null,60], 44:[61,null,59], 43:[60,null,58], 42:[59,null,57], 41:[58,null,56],
+  40:[57,68,55], 39:[57,67,54], 38:[56,65,54], 37:[55,63,53], 36:[54,61,52],
+  35:[54,60,52], 34:[53,58,51], 33:[52,57,50], 32:[52,56,49], 31:[51,55,48],
+  30:[51,54,48], 29:[50,53,47], 28:[49,52,46], 27:[49,51,46], 26:[48,50,45],
+  25:[48,49,44], 24:[47,48,43], 23:[47,47,43], 22:[46,46,42], 21:[45,45,41],
+  20:[45,44,40], 19:[44,43,39], 18:[43,42,38], 17:[42,41,37], 16:[41,40,36],
+  15:[41,40,35], 14:[38,38,34], 13:[37,37,32], 12:[37,36,31], 11:[35,35,30],
+  10:[33,33,29],  9:[32,31,28],  8:[32,29,28],  7:[31,27,26],  6:[30,26,25],
+   5:[29,25,24],  4:[28,23,23],  3:[27,22,23],  2:[26,21,22],  1:[25,20,21],  0:[24,20,22]
+};
+const SECTION_COL = { listening:0, structure:1, reading:2 };
+const SECTION_INFO = {
+  listening: { label:"Listening",                          badge:"LISTENING",  cls:"listening" },
+  structure: { label:"Structure & Written Expression",     badge:"STRUCTURE",  cls:"" },
+  reading:   { label:"Reading Comprehension",              badge:"READING",    cls:"reading" }
+};
+
+/**
+ * Konversi jumlah benar -> skor konversi untuk satu section.
+ * Aturan: lebih dari batas tabel => pakai baris tertinggi yang bernilai;
+ *         nilai null => pakai baris tertinggi yang tersedia.
+ */
+function convertScore(section, correct){
+  const idx = SECTION_COL[section];
+  const rows = Object.keys(CONVERSION).map(Number).sort((a,b)=>b-a); // 50 -> 0
+  const topRow = rows.find(r => CONVERSION[r][idx] !== null);        // baris tertinggi bernilai
+  if (topRow === undefined) return 0;
+  if (correct >= topRow) return CONVERSION[topRow][idx];
+  const row = rows.find(r => r <= correct && CONVERSION[r][idx] !== null);
+  return row !== undefined ? CONVERSION[row][idx] : CONVERSION[topRow][idx];
+}
+
+/* ================================================================
+   PASSAGES — teks bacaan untuk soal Reading
+   ================================================================ */
+const PASSAGES = {
+  "P1": {
+    "title": "Photosynthesis",
+    "text": "Photosynthesis is the process by which green plants convert light energy into chemical energy. Using sunlight, water absorbed from the soil, and carbon dioxide taken from the air, plants produce glucose and release oxygen as a by-product. The process takes place mainly in the leaves, inside organelles called chloroplasts, which contain the green pigment chlorophyll.\n\nPhotosynthesis is fundamental to life on Earth. It provides nearly all of the oxygen in the atmosphere and forms the base of nearly every food chain. Scientists estimate that land plants and ocean plankton together convert billions of tons of carbon each year. However, deforestation and ocean pollution have raised concerns about whether this natural balance can be maintained."
+  },
+  "P2": {
+    "title": "The Transcontinental Railroad",
+    "text": "Completed in 1869, the Transcontinental Railroad connected the eastern United States with the Pacific coast for the first time. Two companies, the Union Pacific and the Central Pacific, raced toward each other from opposite directions, laying track through prairies, deserts, and mountains. The two lines finally met at Promontory Summit, Utah, where a golden spike was driven to mark the occasion.\n\nThe railroad transformed the nation. A journey that once took months by wagon could now be completed in about a week. Goods, mail, and people moved faster and more cheaply, new towns sprang up along the routes, and national markets began to form. Yet the achievement came at great human cost: thousands of workers, including many Chinese and Irish immigrants, endured dangerous conditions, harsh weather, and low pay while building the line."
+  }
+};
+
+/* ================================================================
+   QUESTIONS — bank soal
+   Format:
+   { id, section:"listening"|"structure"|"reading", passage_id:null|"P1"...,
+     audio_url:null|"...", question, options:{A..E}, answer:"A",
+     explanation:"...", void:false }
+   ================================================================ */
+const QUESTIONS = [
+  /* ---------- Section 1: Listening (contoh) ---------- */
+  {
+    "id": 1,
+    "section": "listening",
+    "passage_id": null,
+    "audio_url": null,
+    "question": "Why does the man go to the registration office?",
+    "options": {
+      "A": "To withdraw money for tuition",
+      "B": "To ask about a registration problem",
+      "C": "To apply for a campus job",
+      "D": "To return some borrowed books",
+      "E": "To meet his academic advisor"
+    },
+    "answer": "B",
+    "explanation": "Percakapan menunjukkan pria tersebut bermasalah dengan jadwal kelas yang penuh saat registrasi.",
+    "void": false
+  },
+  {
+    "id": 2,
+    "section": "listening",
+    "passage_id": null,
+    "audio_url": null,
+    "question": "What does the woman suggest the man do?",
+    "options": {
+      "A": "Change his major immediately",
+      "B": "Drop all of his classes",
+      "C": "Wait for a section to open",
+      "D": "Complain to the dean",
+      "E": "Take the course next summer"
+    },
+    "answer": "C",
+    "explanation": "Si perempuan menyarankan menunggu karena biasanya ada kursi kosong pada minggu pertama (add-drop period).",
+    "void": false
+  },
+  {
+    "id": 3,
+    "section": "listening",
+    "passage_id": null,
+    "audio_url": null,
+    "question": "What can be inferred about the man?",
+    "options": {
+      "A": "He has already taken the course.",
+      "B": "He is a first-year student.",
+      "C": "He dislikes the professor.",
+      "D": "He registered late on purpose.",
+      "E": "He wants to graduate early."
+    },
+    "answer": "B",
+    "explanation": "Dari percakapan, ia belum mengenal prosedur registrasi, yang menandakan ia mahasiswa tahun pertama.",
+    "void": false
+  },
+
+  /* ---------- Section 2: Structure & Written Expression (contoh) ---------- */
+  {
+    "id": 4,
+    "section": "structure",
+    "passage_id": null,
+    "audio_url": null,
+    "question": "The committee ___ the proposal twice before approving it last week.",
+    "options": {
+      "A": "review",
+      "B": "reviews",
+      "C": "reviewed",
+      "D": "reviewing",
+      "E": "had reviewed"
+    },
+    "answer": "E",
+    "explanation": "Aksi mereview terjadi sebelum aksi lampau lain (approving ... last week), jadi digunakan past perfect 'had reviewed'.",
+    "void": false
+  },
+  {
+    "id": 5,
+    "section": "structure",
+    "passage_id": null,
+    "audio_url": null,
+    "question": "___ that the samples were contaminated, the team repeated the entire experiment.",
+    "options": {
+      "A": "Convinced",
+      "B": "To convince",
+      "C": "Convincing",
+      "D": "It convinced",
+      "E": "Because convince"
+    },
+    "answer": "A",
+    "explanation": "'Convinced' merupakan participle (reduced adjective clause: 'Because they were convinced...') yang menerangkan subjek 'the team'.",
+    "void": false
+  },
+  {
+    "id": 6,
+    "section": "structure",
+    "passage_id": null,
+    "audio_url": null,
+    "question": "The data must be analyzed carefully, ___ errors may affect the final conclusion.",
+    "options": {
+      "A": "because",
+      "B": "although",
+      "C": "so",
+      "D": "unless",
+      "E": "despite"
+    },
+    "answer": "A",
+    "explanation": "Setelah kosong ada kalimat lengkap (errors + may affect), jadi digunakan konjungsi sebab-akibat 'because'.",
+    "void": false
+  },
+
+  /* ---------- Section 3: Reading Comprehension (contoh) ---------- */
+  {
+    "id": 7,
+    "section": "reading",
+    "passage_id": "P1",
+    "audio_url": null,
+    "question": "According to the passage, where does most photosynthesis take place?",
+    "options": {
+      "A": "In the roots",
+      "B": "In the leaves",
+      "C": "In the flowers",
+      "D": "In the soil",
+      "E": "In the atmosphere"
+    },
+    "answer": "B",
+    "explanation": "Paragraf 1 menyatakan proses ini 'takes place mainly in the leaves'.",
+    "void": false
+  },
+  {
+    "id": 8,
+    "section": "reading",
+    "passage_id": "P1",
+    "audio_url": null,
+    "question": "The word 'by-product' in paragraph 1 is closest in meaning to",
+    "options": {
+      "A": "main goal",
+      "B": "additional result",
+      "C": "raw material",
+      "D": "waste problem",
+      "E": "chemical formula"
+    },
+    "answer": "B",
+    "explanation": "Oksigen dilepaskan sebagai hasil sampingan dari produksi glukosa, bukan produk utamanya.",
+    "void": false
+  },
+  {
+    "id": 9,
+    "section": "reading",
+    "passage_id": "P2",
+    "audio_url": null,
+    "question": "What is the main idea of the passage?",
+    "options": {
+      "A": "The construction of the railroad was quick and easy.",
+      "B": "The railroad connected the nation but cost workers greatly.",
+      "C": "Railroads replaced wagon travel permanently.",
+      "D": "Chinese immigrants refused to work on railroads.",
+      "E": "The golden spike was made of ordinary iron."
+    },
+    "answer": "B",
+    "explanation": "Keseluruhan teks menyoroti transformasi negara oleh rel kereta sekaligus harga yang dibayar para pekerja.",
+    "void": false
+  },
+  {
+    "id": 10,
+    "section": "reading",
+    "passage_id": "P2",
+    "audio_url": null,
+    "question": "It can be inferred from the passage that before 1869, traveling from the East to the Pacific coast took about",
+    "options": {
+      "A": "a week",
+      "B": "a day",
+      "C": "months",
+      "D": "ten years",
+      "E": "an afternoon"
+    },
+    "answer": "C",
+    "explanation": "Paragraf 2 menyebut perjalanan yang dulu butuh 'months by wagon' kini hanya sekitar satu minggu.",
+    "void": false
+  }
+];
+
+/* ================================================================
+   STATE & PENYIMPANAN
+   ================================================================ */
+const DURATION_MS   = CONFIG.durationMinutes * 60 * 1000;
+const TOTAL_SECONDS = CONFIG.durationMinutes * 60;
+
+let session = null;      // { name, answers:{id:"A"}, flagged:{id:true}, startedAt, endTime }
+let currentIdx = 0;      // indeks soal yang sedang tampil
+let timerId = null;
+let warned10 = false, warned5 = false;
+let lastResult = null;   // hasil terakhir untuk layar hasil
+let reviewFilter = { status:"all", section:"all" };
+
+/** Simpan sesi ke localStorage (aman dengan try/catch). */
+function saveSession(){
+  try { localStorage.setItem(CONFIG.storageKeys.session, JSON.stringify(session)); }
+  catch(e){ /* storage penuh / disabled — ujian tetap jalan di memori */ }
+}
+function loadJSON(key){
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e){ return null; }
+}
+/** Cek apakah QUESTIONS punya data yang kurang → tampilkan peringatan. */
+function validateQuestions(){
+  const problems = [];
+  QUESTIONS.forEach(q => {
+    const label = `Soal #${q.id} (${q.section})`;
+    if (!q.question) problems.push(`${label}: teks soal kosong`);
+    if (!q.options || Object.keys(q.options).length < 2) problems.push(`${label}: opsi kurang`);
+    if (!q.answer || !(q.answer in (q.options||{}))) problems.push(`${label}: kunci jawaban tidak valid`);
+    if (q.section === "reading" && (!q.passage_id || !PASSAGES[q.passage_id]))
+      problems.push(`${label}: passage tidak ditemukan`);
+  });
+  if (problems.length){
+    console.warn("[VALIDASI SOAL]", problems);
+    toast(`⚠ ${problems.length} soal bermasalah — cek console (developer tools)`, "warn", 6000);
+  }
+}
+
+/* ================================================================
+   UTILITAS UI
+   ================================================================ */
+const $ = sel => document.querySelector(sel);
+function showScreen(name){
+  document.body.dataset.screen = name;
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  $("#screen-" + name).classList.add("active");
+  window.scrollTo({top:0});
+}
+function toast(msg, type="", ms=3200){
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  el.textContent = msg;
+  $("#toast-wrap").appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+function fmtMMSS(totalSec){
+  const m = Math.max(0, Math.floor(totalSec / 60));
+  const s = Math.max(0, Math.floor(totalSec % 60));
+  return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+}
+
+/* ================================================================
+   DARK MODE
+   ================================================================ */
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  $("#btn-theme").textContent = t === "dark" ? "☀️" : "🌙";
+  try { localStorage.setItem(CONFIG.storageKeys.theme, t); } catch(e){}
+}
+$("#btn-theme").addEventListener("click", () => {
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+});
+applyTheme((()=>{
+  try { return localStorage.getItem(CONFIG.storageKeys.theme) || "light"; } catch(e){ return "light"; }
+})());
+
+/* ================================================================
+   BERANDA — mulai / lanjutkan / riwayat
+   ================================================================ */
+function renderHistory(){
+  const hist = loadJSON(CONFIG.storageKeys.history) || [];
+  const box = $("#history-box");
+  if (!hist.length){
+    box.innerHTML = '<p class="muted small">Belum ada riwayat. Selesaikan simulasi pertamamu!</p>';
+    return;
+  }
+  let html = '<div style="overflow-x:auto"><table><thead><tr>' +
+    '<th>Tanggal</th><th>Nama</th><th>Listening</th><th>Structure</th><th>Reading</th><th>Skor Akhir</th>' +
+    '</tr></thead><tbody>';
+  hist.forEach(h => {
+    html += `<tr><td>${h.date}</td><td style="text-align:left">${escapeHTML(h.name)}</td>` +
+            `<td>${h.L}</td><td>${h.S}</td><td>${h.R}</td><td><b>${h.final}</b></td></tr>`;
+  });
+  box.innerHTML = html + "</tbody></table></div>";
+}
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/** Cek sesi tersimpan saat halaman dibuka: tawarkan lanjutkan atau auto-submit. */
+function checkSavedSession(){
+  const saved = loadJSON(CONFIG.storageKeys.session);
+  if (!saved || !saved.endTime) return;
+  const now = Date.now();
+  if (now < saved.endTime){
+    // Masih ada waktu → tampilkan banner lanjutkan
+    $("#resume-banner").classList.remove("hidden");
+    $("#resume-name").textContent = saved.name || "Peserta";
+    const left = Math.floor((saved.endTime - now) / 1000);
+    $("#resume-info").textContent =
+      `Sisa waktu ${fmtMMSS(left)} • ${(saved.answers ? Object.keys(saved.answers).length : 0)} soal sudah dijawab.`;
+    $("#btn-resume").onclick = () => { session = saved; enterExam(true); };
+    $("#btn-discard").onclick = () => {
+      try { localStorage.removeItem(CONFIG.storageKeys.session); } catch(e){}
+      $("#resume-banner").classList.add("hidden");
+      toast("Sesi lama dibuang.", "warn");
+    };
+  } else {
+    // Waktu sudah lewat sebelum sempat dikumpulkan → langsung nilai & tampilkan hasil
+    session = saved;
+    submitExam(true);
+  }
+}
+
+$("#btn-start").addEventListener("click", () => {
+  const name = $("#inp-name").value.trim();
+  if (!name){ toast("Tulis dulu namamu, ya. 😊", "warn"); $("#inp-name").focus(); return; }
+  // Hapus sesi lama jika ada
+  try { localStorage.removeItem(CONFIG.storageKeys.session); } catch(e){}
+  session = {
+    name,
+    answers: {},                     // { questionId: "A" }
+    flagged: {},                     // { questionId: true }
+    startedAt: Date.now(),
+    endTime: Date.now() + DURATION_MS   // waktu selesai absolut — akurat saat refresh
+  };
+  saveSession();
+  enterExam(false);
+});
+$("#inp-name").addEventListener("keydown", e => { if (e.key === "Enter") $("#btn-start").click(); });
+
+/* ================================================================
+   UJIAN — render soal, timer, navigasi
+   ================================================================ */
+function enterExam(resumed){
+  warned10 = false; warned5 = false;
+  showScreen("exam");
+  $("#who-name").textContent = session.name;
+  buildNavPanel();
+  currentIdx = 0;
+  renderQuestion();
+  startTimer();
+  if (!resumed) toast(`Semangat, ${session.name}! Mulai dari soal 1.`, "success");
+}
+
+function startTimer(){
+  clearInterval(timerId);
+  updateTimerUI();
+  timerId = setInterval(() => {
+    const left = Math.floor((session.endTime - Date.now()) / 1000);
+    if (left <= 0){
+      clearInterval(timerId);
+      $("#timer").textContent = "00:00";
+      toast("⏰ Waktu habis! Jawabanmu otomatis dikumpulkan.", "danger", 5000);
+      submitExam(true);
+      return;
+    }
+    updateTimerUI();
+
+    // Notifikasi peringatan waktu (sekali per ambang)
+    if (left <= 300 && !warned5){ warned5 = true; toast("🔴 Sisa waktu 5 menit!", "danger"); }
+    else if (left <= 600 && !warned10){ warned10 = true; toast("🟡 Sisa waktu 10 menit!", "warn"); }
+  }, 500); // cek 2x/detik agar presisi meski tab di-throttle
+}
+
+function updateTimerUI(){
+  const left = Math.floor((session.endTime - Date.now()) / 1000);
+  const el = $("#timer");
+  el.textContent = fmtMMSS(left);
+  el.classList.toggle("warn",   left <= 600 && left > 300);
+  el.classList.toggle("danger", left <= 300);
+}
+
+/** Render soal pada indeks `idx` (mengikuti urutan QUESTIONS). */
+function renderQuestion(){
+  const q = QUESTIONS[currentIdx];
+  const info = SECTION_INFO[q.section];
+
+  // Badge section + nomor
+  const badge = $("#q-badge");
+  badge.textContent = info.badge;
+  badge.className = "badge " + info.cls;
+  $("#q-number").textContent = `Soal ${currentIdx + 1} dari ${QUESTIONS.length}`;
+
+  // Tandai ragu-ragu
+  const flagBtn = $("#btn-flag");
+  flagBtn.classList.toggle("on", !!session.flagged[q.id]);
+  flagBtn.textContent = session.flagged[q.id] ? "🚩 Ragu-ragu ✓" : "🚩 Tandai ragu-ragu";
+
+  // Audio (Listening)
+  const audioBox = $("#audio-box");
+  if (q.section === "listening"){
+    audioBox.classList.remove("hidden");
+    if (q.audio_url){
+      audioBox.innerHTML = `<b>🎧 Dengarkan audio:</b><audio controls src="${escapeHTML(q.audio_url)}"></audio>`;
+    } else {
+      audioBox.innerHTML = `<span class="audio-missing">🎧 Audio belum tersedia — soal tetap bisa dijawab.</span>`;
+    }
+  } else {
+    audioBox.classList.add("hidden");
+    audioBox.innerHTML = "";
+  }
+
+  // Passage (Reading)
+  const pane = $("#passage-pane");
+  if (q.section === "reading" && q.passage_id && PASSAGES[q.passage_id]){
+    const p = PASSAGES[q.passage_id];
+    pane.classList.remove("hidden");
+    $("#passage-title").textContent = "📖 " + p.title;
+    $("#passage-text").textContent = p.text;
+  } else {
+    pane.classList.add("hidden");
+  }
+
+  // Teks soal
+  const qText = $("#q-text");
+  qText.textContent = q.question;
+  qText.classList.toggle("passage-q", q.section === "reading");
+
+  // Opsi (jumlah mengikuti data: bisa 4 atau 5)
+  const optsWrap = $("#opts");
+  optsWrap.innerHTML = "";
+  const picked = session.answers[q.id];
+  Object.keys(q.options).sort().forEach(letter => {
+    const btn = document.createElement("button");
+    btn.className = "opt" + (picked === letter ? " selected" : "");
+    btn.innerHTML = `<span class="letter">${letter}</span><span>${escapeHTML(q.options[letter])}</span>`;
+    btn.addEventListener("click", () => {
+      // Simpan jawaban + update UI seketika
+      session.answers[q.id] = letter;
+      saveSession();
+      optsWrap.querySelectorAll(".opt").forEach(o => o.classList.remove("selected"));
+      btn.classList.add("selected");
+      updateNumBtn(q.id);
+    });
+    optsWrap.appendChild(btn);
+  });
+
+  // Tombol prev/next
+  $("#btn-prev").disabled = currentIdx === 0;
+  $("#btn-next").disabled = currentIdx === QUESTIONS.length - 1;
+
+  highlightCurrentNum();
+  // Scroll area soal ke atas (bukan seluruh halaman, agar panel nomor tetap)
+  $(".question-area").scrollIntoView({ block:"nearest" });
+}
+
+/* ---------- Panel navigasi nomor ---------- */
+function buildNavPanel(){
+  const wrap = $("#nav-sections");
+  wrap.innerHTML = "";
+  ["listening","structure","reading"].forEach(sec => {
+    const qs = QUESTIONS.map((q,i) => ({q,i})).filter(x => x.q.section === sec);
+    if (!qs.length) return;
+    const label = document.createElement("div");
+    label.className = "sec-label";
+    label.textContent = `${SECTION_INFO[sec].label} (${qs.length})`;
+    const grid = document.createElement("div");
+    grid.className = "num-grid";
+    qs.forEach(({q,i}) => {
+      const b = document.createElement("button");
+      b.className = "num-btn";
+      b.dataset.qid = q.id;
+      b.textContent = i + 1;
+      b.title = SECTION_INFO[sec].label + " — soal " + (i+1);
+      b.addEventListener("click", () => {
+        currentIdx = i;
+        renderQuestion();
+        closeNav(); // di mobile langsung tutup drawer
+      });
+      grid.appendChild(b);
+    });
+    wrap.appendChild(label);
+    wrap.appendChild(grid);
+  });
+  QUESTIONS.forEach(q => updateNumBtn(q.id));
+}
+function updateNumBtn(qid){
+  const b = document.querySelector(`.num-btn[data-qid="${qid}"]`);
+  if (!b) return;
+  b.classList.toggle("answered", !!session.answers[qid]);
+  b.classList.toggle("flagged", !!session.flagged[qid]);
+}
+function highlightCurrentNum(){
+  document.querySelectorAll(".num-btn").forEach(b => b.classList.remove("current"));
+  const b = document.querySelector(`.num-btn[data-qid="${QUESTIONS[currentIdx].id}"]`);
+  if (b) b.classList.add("current");
+}
+
+/* Drawer panel nomor (mobile) */
+function openNav(){ $("#nav-panel").classList.add("open"); $("#nav-overlay").classList.add("show"); }
+function closeNav(){ $("#nav-panel").classList.remove("open"); $("#nav-overlay").classList.remove("show"); }
+$("#nav-toggle").addEventListener("click", openNav);
+$("#nav-close").addEventListener("click", closeNav);
+$("#nav-overlay").addEventListener("click", closeNav);
+
+/* ---------- Tombol ujian ---------- */
+$("#btn-prev").addEventListener("click", () => { if (currentIdx > 0){ currentIdx--; renderQuestion(); } });
+$("#btn-next").addEventListener("click", () => { if (currentIdx < QUESTIONS.length - 1){ currentIdx++; renderQuestion(); } });
+
+$("#btn-flag").addEventListener("click", () => {
+  const q = QUESTIONS[currentIdx];
+  session.flagged[q.id] = !session.flagged[q.id];
+  if (!session.flagged[q.id]) delete session.flagged[q.id];
+  saveSession();
+  renderQuestion();
+});
+
+function countUnanswered(){
+  return QUESTIONS.filter(q => !session.answers[q.id]).length;
+}
+function openFinishModal(){
+  const blank = countUnanswered();
+  const per = ["listening","structure","reading"].map(sec => {
+    const qs = QUESTIONS.filter(q => q.section === sec);
+    const b = qs.filter(q => !session.answers[q.id]).length;
+    return `${SECTION_INFO[sec].label}: ${b} kosong`;
+  }).join(" • ");
+  $("#finish-msg").innerHTML =
+    (blank === 0
+      ? "Semua soal sudah dijawab. 👍"
+      : `Kamu belum menjawab <b>${blank}</b> soal.<br><span class="small">${per}</span>`) +
+    `<br><br>Jawaban yang dikumpulkan tidak bisa diubah lagi.`;
+  $("#modal-finish").classList.remove("hidden");
+}
+$("#btn-finish-top").addEventListener("click", openFinishModal);
+$("#btn-finish-panel").addEventListener("click", () => { closeNav(); openFinishModal(); });
+$("#btn-cancel-finish").addEventListener("click", () => $("#modal-finish").classList.add("hidden"));
+
+$("#btn-confirm-finish").addEventListener("click", () => {
+  $("#modal-finish").classList.add("hidden");
+  submitExam(false);
+});
+
+/* Peringatan sebelum menutup tab saat ujian berjalan */
+window.addEventListener("beforeunload", e => {
+  if (document.body.dataset.screen === "exam" && session){
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+
+/* ================================================================
+   PENILAIAN & HASIL
+   ================================================================ */
+/** Kumpulkan ujian: hitung skor, simpan riwayat, render layar hasil. */
+function submitExam(auto){
+  clearInterval(timerId);
+  closeNav();
+  const res = grade();
+
+  // Simpan riwayat (maks CONFIG.historyLimit)
+  const hist = loadJSON(CONFIG.storageKeys.history) || [];
+  hist.unshift({
+    date: new Date().toLocaleString("id-ID", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }),
+    name: session.name, L: res.sections.listening.score,
+    S: res.sections.structure.score, R: res.sections.reading.score,
+    final: res.final
+  });
+  try {
+    localStorage.setItem(CONFIG.storageKeys.history, JSON.stringify(hist.slice(0, CONFIG.historyLimit)));
+    localStorage.removeItem(CONFIG.storageKeys.session); // sesi selesai
+  } catch(e){}
+
+  lastResult = res;
+  renderResult();
+  showScreen("result");
+  if (auto) toast("Hasil sudah dihitung otomatis.", "warn");
+}
+
+/** Hitung benar/salah/kosong + skor per section dan skor akhir. */
+function grade(){
+  const sections = { listening:{}, structure:{}, reading:{} };
+  const detail = [];
+  ["listening","structure","reading"].forEach(sec => {
+    sections[sec] = { correct:0, wrong:0, blank:0, total:0 };
+  });
+
+  QUESTIONS.forEach(q => {
+    const st = sections[q.section];
+    st.total++;
+    const picked = session.answers[q.id] || null;
+    let status; // "correct" | "wrong" | "blank" | "voided"
+    if (q.void){
+      st.correct++;                 // soal dianulir: semua peserta dapat poin
+      status = "voided";
+    } else if (!picked){
+      st.blank++; status = "blank";
+    } else if (picked === q.answer){
+      st.correct++; status = "correct";
+    } else {
+      st.wrong++; status = "wrong";
+    }
+    detail.push({ q, picked, status });
+  });
+
+  ["listening","structure","reading"].forEach(sec => {
+    sections[sec].score = convertScore(sec, sections[sec].correct);
+  });
+
+  const final = Math.round(
+    (sections.listening.score + sections.structure.score + sections.reading.score) * 10 / 3
+  );
+  const usedSec = Math.min(
+    Math.floor((Date.now() - session.startedAt) / 1000),
+    TOTAL_SECONDS
+  );
+  return { sections, final, detail, usedSec };
+}
+
+function renderResult(){
+  const res = lastResult;
+  $("#final-score").textContent = res.final;
+  $("#r-name").textContent = session.name;
+  $("#r-date").textContent = new Date().toLocaleDateString("id-ID",
+    { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+  $("#r-used").textContent = fmtMMSS(res.usedSec);
+
+  // Tabel per section
+  const tbody = $("#sec-tbody");
+  tbody.innerHTML = "";
+  ["listening","structure","reading"].forEach(sec => {
+    const s = res.sections[sec];
+    tbody.innerHTML += `<tr>
+      <td style="text-align:left">${SECTION_INFO[sec].label}</td>
+      <td style="color:var(--success);font-weight:700">${s.correct}</td>
+      <td style="color:var(--danger);font-weight:700">${s.wrong}</td>
+      <td>${s.blank}</td>
+      <td><b>${s.score}</b> <span class="muted small">/ ${s.total} benar</span></td>
+    </tr>`;
+  });
+
+  // Target skor
+  $("#inp-target").value = CONFIG.targetDefault;
+  updateTarget();
+}
+
+function updateTarget(){
+  const target = Number($("#inp-target").value) || 0;
+  const diff = lastResult.final - target;
+  const el = $("#target-result");
+  const pass = diff >= 0;
+  el.className = "target-result " + (pass ? "pass" : "fail");
+  el.textContent = pass
+    ? `🎉 Target tercapai! Skormu ${lastResult.final} (lebih ${diff} poin dari target ${target}).`
+    : `💪 Belum tercapai. Skormu ${lastResult.final}, kurang ${Math.abs(diff)} poin dari target ${target}.`;
+}
+$("#inp-target").addEventListener("input", updateTarget);
+
+/* ================================================================
+   PEMBAHASAN
+   ================================================================ */
+$("#btn-review").addEventListener("click", () => {
+  reviewFilter = { status:"all", section:"all" };
+  setFilterUI();
+  renderReview();
+  showScreen("review");
+});
+$("#btn-back-result").addEventListener("click", () => showScreen("result"));
+$("#btn-print").addEventListener("click", () => window.print());
+$("#btn-print2").addEventListener("click", () => window.print());
+
+$("#status-filter").addEventListener("click", e => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  reviewFilter.status = chip.dataset.f;
+  setFilterUI(); renderReview();
+});
+$("#sec-filter").addEventListener("change", e => {
+  reviewFilter.section = e.target.value;
+  renderReview();
+});
+function setFilterUI(){
+  document.querySelectorAll("#status-filter .chip").forEach(c =>
+    c.classList.toggle("on", c.dataset.f === reviewFilter.status));
+  $("#sec-filter").value = reviewFilter.section;
+}
+
+function renderReview(){
+  const res = lastResult;
+  const list = $("#review-list");
+  const filtered = res.detail.filter(({status, q}) => {
+    if (reviewFilter.status === "wrong" && status !== "wrong") return false;
+    if (reviewFilter.status === "blank" && status !== "blank") return false;
+    if (reviewFilter.section !== "all" && q.section !== reviewFilter.section) return false;
+    return true;
+  });
+  $("#review-count").textContent = `Menampilkan ${filtered.length} dari ${QUESTIONS.length} soal.`;
+
+  if (!filtered.length){
+    list.innerHTML = '<div class="card"><p class="muted">Tidak ada soal pada filter ini. 🎉</p></div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(({q, picked, status}) => {
+    const statusTag = {
+      correct:'<span class="status-tag correct">✔ Benar</span>',
+      wrong:  '<span class="status-tag wrong">✘ Salah</span>',
+      blank:  '<span class="status-tag blank">— Kosong</span>',
+      voided: '<span class="status-tag voided">⚖ Soal dianulir (dapat poin)</span>'
+    }[status];
+    const optsHTML = Object.keys(q.options).sort().map(letter => {
+      let cls = "";
+      const isKey = letter === q.answer;
+      const isPick = letter === picked && status === "wrong";
+      if (isKey) cls = "key";
+      if (isPick) cls = "picked-wrong";
+      return `<div class="rv-opt ${cls}"><b>${letter}.</b> ${escapeHTML(q.options[letter])}` +
+             (isKey ? " &nbsp;← kunci" : "") + (isPick ? " &nbsp;← jawabanmu" : "") + `</div>`;
+    }).join("");
+    const explHTML = q.explanation
+      ? `<div class="rv-expl"><b>💡 Pembahasan:</b> ${escapeHTML(q.explanation)}</div>`
+      : "";
+    return `<div class="review-item ${status}">
+      <div class="rv-head">
+        <b>Soal ${q.id}</b>
+        <span class="badge ${SECTION_INFO[q.section].cls}">${SECTION_INFO[q.section].badge}</span>
+        ${statusTag}
+        ${session.flagged[q.id] ? '<span class="small muted">🚩 pernah ditandai ragu-ragu</span>' : ""}
+      </div>
+      <div class="rv-q">${escapeHTML(q.question)}</div>
+      ${optsHTML}
+      ${explHTML}
+    </div>`;
+  }).join("");
+}
+
+/* ================================================================
+   ULANGI SIMULASI
+   ================================================================ */
+$("#btn-retry").addEventListener("click", () => {
+  if (!confirm("Mulai simulasi baru? Riwayat lama tetap tersimpan.")) return;
+  lastResult = null;
+  session = null;
+  showScreen("home");
+  renderHistory();
+  $("#inp-name").focus();
+});
+
+/* ================================================================
+   INISIALISASI
+   ================================================================ */
+validateQuestions();   // cek kelengkapan data soal saat file dibuka
+renderHistory();
+checkSavedSession();
+</script>
+</body>
+</html>
