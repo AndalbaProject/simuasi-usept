@@ -3096,18 +3096,22 @@ function submitExam(auto){
   closeNav();
   const res = grade();
 
-  // Simpan riwayat (maks CONFIG.historyLimit)
-  const hist = loadJSON(CONFIG.storageKeys.history) || [];
-  hist.unshift({
-    date: new Date().toLocaleString("id-ID", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }),
-    name: session.name, L: res.sections.listening.score,
-    S: res.sections.structure.score, R: res.sections.reading.score,
-    final: res.final
-  });
+  // Simpan riwayat (maks CONFIG.historyLimit) — dibungkus try/catch agar
+  // error di sini TIDAK PERNAH menghalangi tampilnya layar hasil.
   try {
+    const hist = loadJSON(CONFIG.storageKeys.history) || [];
+    hist.unshift({
+      date: new Date().toLocaleString("id-ID", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }),
+      // Skor section yang tidak ikut ujian (mis. Listening belum ada soalnya) diisi 0
+      name: session.name,
+      L: res.sections.listening ? res.sections.listening.score : 0,
+      S: res.sections.structure ? res.sections.structure.score : 0,
+      R: res.sections.reading   ? res.sections.reading.score   : 0,
+      final: res.final
+    });
     localStorage.setItem(CONFIG.storageKeys.history, JSON.stringify(hist.slice(0, CONFIG.historyLimit)));
     localStorage.removeItem(CONFIG.storageKeys.session); // sesi selesai
-  } catch(e){}
+  } catch(e){ console.warn("Gagal simpan riwayat:", e); }
 
   lastResult = res;
   renderResult();
