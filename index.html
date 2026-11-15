@@ -3207,7 +3207,10 @@ function grade(){
     const picked = session.answers[q.id] || null;
     let status; // "correct" | "wrong" | "blank" | "voided"
     if (q.void){
-      st.correct++;                 // soal dianulir: semua peserta dapat poin
+      // Soal dianulir: dapat poin hanya jika peserta ikut mengerjakan (menjawab apa pun).
+      // Kalau tidak menjawab sama sekali, tetap dihitung salah — bukan masuk akumulasi benar.
+      if (picked){ st.correct++; }
+      else { st.wrong++; }
       status = "voided";
     } else if (!picked){
       st.wrong++;                   // tidak dijawab = dihitung SALAH saat dikumpulkan
@@ -3221,7 +3224,11 @@ function grade(){
   });
 
   Object.keys(sections).forEach(sec => {
-    sections[sec].score = convertScore(sec, sections[sec].correct);
+    // Benar 0 = skor 0 (tidak mendapat nilai konversi minimum tabel).
+    // Yang tidak dijawab sudah dihitung salah di atas, bukan masuk benar.
+    sections[sec].score = sections[sec].correct > 0
+      ? convertScore(sec, sections[sec].correct)
+      : 0;
   });
 
   // Skor akhir = jumlah skor konversi x 10 / jumlah section yang diujikan.
