@@ -2819,20 +2819,46 @@ applyTheme((()=>{
    BERANDA — mulai / lanjutkan / riwayat
    ================================================================ */
 function renderHistory(){
-  const hist = loadJSON(CONFIG.storageKeys.history) || [];
   const box = $("#history-box");
-  if (!hist.length){
-    box.innerHTML = '<p class="muted small">Belum ada riwayat. Selesaikan simulasi pertamamu!</p>';
-    return;
+  const tableHTML = (rows) => {
+    let html = '<div style="overflow-x:auto"><table><thead><tr>' +
+      '<th>Tanggal</th><th>Nama</th><th>Listening</th><th>Structure</th><th>Reading</th><th>Skor Akhir</th>' +
+      '</tr></thead><tbody>';
+    rows.forEach(h => {
+      html += `<tr><td>${h.date}</td><td style="text-align:left">${escapeHTML(h.name)}</td>` +
+              `<td>${h.L}</td><td>${h.S}</td><td>${h.R}</td><td><b>${h.final}</b></td></tr>`;
+    });
+    return html + "</tbody></table></div>";
+  };
+
+  // Prioritas: tarik riwayat dari Google Spreadsheet (muncul di perangkat mana pun).
+  if (CONFIG.webAppUrl){
+    box.innerHTML = '<p class="muted small">⏳ Memuat riwayat dari spreadsheet…</p>';
+    fetch(CONFIG.webAppUrl)
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.rows && d.rows.length){
+          box.innerHTML =
+            '<p class="muted small">🔄 Tersinkron dengan Google Spreadsheet — 10 simulasi terakhir.</p>' +
+            tableHTML(d.rows);
+        } else {
+          renderLocal();
+        }
+      })
+      .catch(renderLocal); // offline / web app belum diperbarui → pakai riwayat perangkat ini
+  } else {
+    renderLocal();
   }
-  let html = '<div style="overflow-x:auto"><table><thead><tr>' +
-    '<th>Tanggal</th><th>Nama</th><th>Listening</th><th>Structure</th><th>Reading</th><th>Skor Akhir</th>' +
-    '</tr></thead><tbody>';
-  hist.forEach(h => {
-    html += `<tr><td>${h.date}</td><td style="text-align:left">${escapeHTML(h.name)}</td>` +
-            `<td>${h.L}</td><td>${h.S}</td><td>${h.R}</td><td><b>${h.final}</b></td></tr>`;
-  });
-  box.innerHTML = html + "</tbody></table></div>";
+
+  function renderLocal(){
+    const hist = loadJSON(CONFIG.storageKeys.history) || [];
+    if (!hist.length){
+      box.innerHTML = '<p class="muted small">Belum ada riwayat. Selesaikan simulasi pertamamu!</p>';
+      return;
+    }
+    box.innerHTML = '<p class="muted small">💾 Riwayat perangkat ini (spreadsheet belum terhubung).</p>' +
+                    tableHTML(hist);
+  }
 }
 function escapeHTML(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
