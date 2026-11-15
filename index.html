@@ -192,11 +192,12 @@ td:first-child,th:first-child{text-align:left}
 .opt.correct .letter{background:var(--success);color:#fff}
 .opt.wrong{border-color:var(--danger);background:var(--danger-soft)}
 .opt.wrong .letter{background:var(--danger);color:#fff}
-/* Catatan kecil di dalam opsi (✔ benar / ✘ salah / kunci) */
-.opt{flex-wrap:wrap}
-.opt .opt-text{flex:1;min-width:120px}
+/* Catatan status di dalam opsi (✔ benar / ✘ salah / kunci) — di sisi kanan */
+.opt{align-items:center}
+.opt .opt-text{flex:1;min-width:0}
 .opt .opt-note{
-  flex-basis:100%;font-size:.8rem;font-weight:700;margin-top:2px;
+  flex:none;font-size:.8rem;font-weight:700;margin-left:8px;
+  white-space:nowrap;
 }
 .opt .opt-note.ok{color:var(--success)}
 .opt .opt-note.no{color:var(--danger)}
@@ -482,7 +483,7 @@ td:first-child,th:first-child{text-align:left}
       <div style="overflow-x:auto">
         <table class="sec-table">
           <thead>
-            <tr><th>Section</th><th>Benar</th><th>Salah</th><th>Kosong</th><th>Skor Konversi</th></tr>
+            <tr><th>Section</th><th>Benar</th><th>Salah <span class="muted">(termasuk kosong)</span></th><th>Skor Konversi</th></tr>
           </thead>
           <tbody id="sec-tbody"></tbody>
         </table>
@@ -522,7 +523,7 @@ td:first-child,th:first-child{text-align:left}
       <div class="filter-bar" id="status-filter">
         <button class="chip on" data-f="all">Semua</button>
         <button class="chip" data-f="wrong">Salah</button>
-        <button class="chip" data-f="blank">Kosong</button>
+        <button class="chip" data-f="blank">Tidak Dijawab</button>
       </div>
       <div class="filter-bar">
         <select id="sec-filter">
@@ -2958,8 +2959,8 @@ function renderQuestion(){
       if (isPick)  btn.classList.add("selected");
     }
 
-    // Bangun isi tombol sekali: huruf + teks opsi (+ catatan status bila sudah dijawab)
-    let inner = `<span class="letter">${letter}</span><span class="opt-text">${escapeHTML(q.options[letter])}</span>`;
+    // Bangun isi tombol sekali: huruf A. + teks opsi (+ catatan status bila sudah dijawab)
+    let inner = `<span class="letter">${letter}.</span><span class="opt-text">${escapeHTML(q.options[letter])}</span>`;
     if (answered){
       if (letter === picked) inner += isKey
         ? '<span class="opt-note ok">✔ Jawabanmu, benar</span>'
@@ -3152,7 +3153,8 @@ function grade(){
       st.correct++;                 // soal dianulir: semua peserta dapat poin
       status = "voided";
     } else if (!picked){
-      st.blank++; status = "blank";
+      st.wrong++;                   // tidak dijawab = dihitung SALAH saat dikumpulkan
+      status = "blank";
     } else if (picked === q.answer){
       st.correct++; status = "correct";
     } else {
@@ -3194,7 +3196,6 @@ function renderResult(){
       <td style="text-align:left">${SECTION_INFO[sec].label}</td>
       <td style="color:var(--success);font-weight:700">${s.correct}</td>
       <td style="color:var(--danger);font-weight:700">${s.wrong}</td>
-      <td>${s.blank}</td>
       <td><b>${s.score}</b> <span class="muted small">/ ${s.total} benar</span></td>
     </tr>`;
   });
@@ -3265,7 +3266,7 @@ function renderReview(){
     const statusTag = {
       correct:'<span class="status-tag correct">✔ Benar</span>',
       wrong:  '<span class="status-tag wrong">✘ Salah</span>',
-      blank:  '<span class="status-tag blank">— Kosong</span>',
+      blank:  '<span class="status-tag blank">— Tidak dijawab (dihitung salah)</span>',
       voided: '<span class="status-tag voided">⚖ Soal dianulir (dapat poin)</span>'
     }[status];
     const optsHTML = Object.keys(q.options).sort().map(letter => {
